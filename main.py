@@ -24,7 +24,7 @@ class App:
 
         pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="dice game", fps=60, display_scale=2)
         pyxel.mouse(True)
-        pyxel.load("../assets/main.pyxres")
+        pyxel.load("assets/main.pyxres")
         pyxel.run(self.update, self.draw)
 
     def draw(self):
