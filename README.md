@@ -1,11 +1,11 @@
 # ヤッツィー(Yahtzee)
-![image](https://github.com/user-attachments/assets/39502d28-5dcd-4cf7-b52a-6c1d326aaa7a)
+![image](https://github.com/user-attachments/assets/eee369a5-15bc-4e3e-a750-a4809fc7713e)
 
 Python向けのレトロゲームエンジン「[Pyxel](https://github.com/kitao/pyxel/blob/main/docs/README.ja.md)」で制作したダイスゲームです。
 
 サイコロのキープと役の選択はマウスクリック、サイコロを振ったりゲームをリセットする際はキーボード操作が必要なため、PCでのプレイ推奨です。
 
-こちらのリンクからゲームが開始されます　→　[ヤッツィー(Yahtzee)](https://kitao.github.io/pyxel/wasm/launcher/?run=nekomata-risan.dice_game.main&gamepad=enabled)
+こちらのリンクからゲームが開始されます　→　[ヤッツィー(Yahtzee)](https://kitao.github.io/pyxel/wasm/launcher/?play=nekomata-risan.dice_game.dice_game&gamepad=enabled)
 
 ## 操作方法
 - Zキー
@@ -25,15 +25,27 @@ Python向けのレトロゲームエンジン「[Pyxel](https://github.com/kitao
 ## 遊び方
 1. サイコロを振る
 
-    ・1ラウンドにつき最大3回までサイコロを振ることができます。
+    ・1ラウンドにつき最大3回までサイコロを振ることができます。得点表の右上にラウンド(Round)と残りの手数(Roll)が表示されます。
 
-    ・サイコロをクリックするとキープのON/OFFを切り替えます。
+　　　・Round　…　現在のラウンド / 全ラウンド数
+
+　　　・Roll　…　現在の手数 / 1ラウンド内の手数の上限
+
+　　　![image](https://github.com/user-attachments/assets/7841f96b-d97e-4cd1-bf84-b6acf79721fd)
+
+　　・サイコロをクリックするとキープのON/OFFを切り替えます。
 
 　　　サイコロを振り直したとき、キープ「ON」のサイコロはキープされます。
 
 2. 役を選択する
 
 　　好みの目が出たら得点表の「役(Score)」欄の中から役をクリックします。
+
+　　既に得点が確定している役は選択できません。
+
+　　現在のサイコロの目により成立している役には黄色い枠が点滅表示されます。(黄色い枠以外も選択できますが、得点は0点です)
+
+　　　![image](https://github.com/user-attachments/assets/7d46a228-8304-4631-9bcb-6258d4c451c7)
 
 　　役を選択したら、再びサイコロを振ります。
 
@@ -58,3 +70,8 @@ Python向けのレトロゲームエンジン「[Pyxel](https://github.com/kitao
 | S.ストレート(S.Straight) | 4つ以上の連番 (30点) |
 | B.ストレート(B.Straight) | 5つの連番 (40点) |
 | ヤッツィー(Yahtzee) | 出た目がすべて同じ (50点) |
+
+## 更新履歴
+2024/07/22　S.ストレートの判定不具合を修正。Round・Roll表示、役のガイド表示実装。
+
+2024/07/21　初回リリース
