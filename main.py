@@ -5,7 +5,7 @@ SCREEN_HEIGHT = 240     # 画面の高さ
 DICE_OFFSET_X = 90
 DICE_OFFSET_Y = 20
 LIST_OFFSET_X = 50
-LIST_OFFSET_Y = 60
+LIST_OFFSET_Y = 70
 DICE_WIGTH = 16
 DICE_HEIGHT = 16
 MAX_SHAKE = 3
@@ -16,16 +16,21 @@ class App:
         self.diceArray = [0, 0, 0, 0, 0]
         self.keepDiceArray = [False, False, False, False, False]
         self.scoreArray = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+        self.candidateArray = [False, False, False, False, False, False, False, False, False, False, False, False]
         self.hiScore = 0
         self.sum = 0
         self.roundCount = 0
         self.shakeCount = 0
         self.isPlaySE = True
+        self.lastDrawFrame = 0
+        self.isDispCandidate = False
 
         pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT, title="dice game", fps=60, display_scale=2)
         pyxel.mouse(True)
         pyxel.load("assets/main.pyxres")
         pyxel.run(self.update, self.draw)
+
+        self.lastDrawFrame = pyxel.frame_count
 
     def draw(self):
         pyxel.cls(pyxel.COLOR_BLACK)
@@ -43,6 +48,8 @@ class App:
         pyxel.line(LIST_OFFSET_X + 84, LIST_OFFSET_Y, LIST_OFFSET_X + 84, LIST_OFFSET_Y + 150, pyxel.COLOR_WHITE)
         pyxel.line(LIST_OFFSET_X + 220, LIST_OFFSET_Y, LIST_OFFSET_X + 220, LIST_OFFSET_Y + 150, pyxel.COLOR_WHITE)
         pyxel.text(LIST_OFFSET_X, LIST_OFFSET_Y - 10, "Score Board", pyxel.COLOR_WHITE)
+        pyxel.text(LIST_OFFSET_X + 154, LIST_OFFSET_Y - 18, f"Round ( {str(self.roundCount).rjust(2)} / {str(MAX_ROUND).rjust(2)} )", pyxel.COLOR_WHITE)
+        pyxel.text(LIST_OFFSET_X + 158, LIST_OFFSET_Y - 10, f"Roll ( {str(self.shakeCount).rjust(2)} / {str(MAX_SHAKE).rjust(2)} )", pyxel.COLOR_WHITE)
         for i in range(16):
             pyxel.line(LIST_OFFSET_X, LIST_OFFSET_Y + i * 10, LIST_OFFSET_X + 220, LIST_OFFSET_Y + i * 10, pyxel.COLOR_WHITE)
 
@@ -86,10 +93,26 @@ class App:
             if i == 12: tmpStr = "All same dice"
             pyxel.text(LIST_OFFSET_X + 86, LIST_OFFSET_Y + i * 10 + 3, tmpStr, pyxel.COLOR_WHITE)
 
+        # 役の選択候補
+        if self.isDispCandidate:
+            for i in range(len(self.candidateArray)):
+                if self.candidateArray[i]:
+                    pyxel.rectb(LIST_OFFSET_X + 61, LIST_OFFSET_Y + 1 + (i + 1) * 10, 23, 9, pyxel.COLOR_YELLOW)
+
+        # SE設定
         tmpX = 16 if self.isPlaySE else 0
         pyxel.blt(LIST_OFFSET_X + 205, LIST_OFFSET_Y + 152, 0, tmpX, DICE_HEIGHT, DICE_WIGTH, DICE_HEIGHT, pyxel.COLOR_PURPLE)
 
     def update(self):
+
+        frame_diff = pyxel.frame_count - self.lastDrawFrame
+        if self.shakeCount > 0:
+            if frame_diff > 30:
+                self.isDispCandidate = not self.isDispCandidate
+                self.lastDrawFrame = pyxel.frame_count
+        else:
+            self.isDispCandidate = False
+
         if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
             x = pyxel.mouse_x
             y = pyxel.mouse_y
@@ -113,13 +136,12 @@ class App:
 
             # 役の選択
             for i in range(12):
-                if x < LIST_OFFSET_X + 60 or x > DICE_OFFSET_X + 100:
+                if x < LIST_OFFSET_X + 60 or x > LIST_OFFSET_X + 84:
                     return
                 if LIST_OFFSET_Y + (i + 1) * 10 <= y and y <= LIST_OFFSET_Y + (i + 2) * 10:
                     if self.scoreArray[i] >= 0:     # 既に選択した役の場合、何もしない
                         break
                     self.calc(i)
-                    self.roundCount += 1
                     self.shakeCount = 0
                     self.resetKeep()
                     break
@@ -133,11 +155,12 @@ class App:
         if self.isKeepAll():
             return
 
-        if self.roundCount >= MAX_ROUND:
+        if self.roundCount >= MAX_ROUND and self.shakeCount == 0:
             self.reTry()
 
         if self.shakeCount == 0:
             self.resetKeep()
+            self.roundCount += 1
 
         if self.shakeCount >= MAX_SHAKE:
             self.playSE(1)
@@ -151,18 +174,55 @@ class App:
 
         self.shakeCount += 1
 
+        # 役の選択候補設定
+        self.setCandidate()
+
     def reTry(self):
         self.resetDice()
         for i in range(len(self.scoreArray)):
             self.scoreArray[i] = -1
+        for i in range(len(self.candidateArray)):
+            self.candidateArray[i] = False
 
         self.roundCount = 0
         self.shakeCount = 0
         self.sum = 0
 
     def calc(self, roleId):
-        tmpVal = 0
+        tmpVal = self.calcPoint(roleId)
         tmpSum = 0
+
+        self.scoreArray[roleId] = tmpVal
+        for i in range(len(self.scoreArray)):
+            if self.scoreArray[i] < 0:
+                continue
+            tmpSum += self.scoreArray[i]
+        self.sum = tmpSum
+        if self.sum > self.hiScore:
+            self.hiScore = self.sum
+
+        if roleId < 7:
+            self.playSE(2)
+        else:
+            if tmpVal > 0:
+                self.playSE(3)
+            else:
+                self.playSE(2)
+
+    def setCandidate(self):
+        for i in range(len(self.candidateArray)):
+            self.candidateArray[i] = False
+
+        for i in range(len(self.scoreArray)):
+            if self.scoreArray[i] >= 0:
+                self.candidateArray[i] = False
+                continue
+
+            if self.calcPoint(i) > 0:
+                self.candidateArray[i] = True
+
+    def calcPoint(self, roleId):
+        tmpVal = 0
         if roleId == 0:     # エース
             for i in range(len(self.diceArray)):
                 if self.diceArray[i] == 0:
@@ -224,19 +284,23 @@ class App:
             tmpCount = 0
             tmpArray.sort()
             for i in range(len(tmpArray) - 1):
-                tmpDice = tmpArray[i]
-                if tmpDice + 1 != tmpArray[i + 1]:
-                    tmpCount += 1
-                if tmpCount > 1:
-                    isRole = False
+                if tmpArray[i] == tmpArray[i + 1]:
+                    continue
+
+                for j in range(i + 1, len(tmpArray)):
+                    if tmpArray[i] + 1 == tmpArray[j]:
+                        tmpCount += 1
+                        break
+                    else:
+                        tmpCount = 0
+                
+                if tmpCount >= 3:
+                    tmpVal = 30
                     break
-            if isRole:
-                tmpVal = 30
         elif roleId == 10:  # B.ストレート
             isRole = True
             tmpDice = 0
             tmpArray = self.diceArray[:]
-            tmpCount = 0
             tmpArray.sort()
             for i in range(len(tmpArray) - 1):
                 tmpDice = tmpArray[i]
@@ -257,22 +321,7 @@ class App:
             if isRole:
                 tmpVal = 50
 
-        self.scoreArray[roleId] = tmpVal
-        for i in range(len(self.scoreArray)):
-            if self.scoreArray[i] < 0:
-                continue
-            tmpSum += self.scoreArray[i]
-        self.sum = tmpSum
-        if self.sum > self.hiScore:
-            self.hiScore = self.sum
-
-        if roleId < 7:
-            self.playSE(2)
-        else:
-            if tmpVal > 0:
-                self.playSE(3)
-            else:
-                self.playSE(2)
+        return tmpVal
 
     def resetDice(self):
         for i in range(len(self.diceArray)):
