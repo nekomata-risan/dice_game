@@ -3,6 +3,8 @@
 
 Python向けのレトロゲームエンジン「[Pyxel](https://github.com/kitao/pyxel/blob/main/docs/README.ja.md)」で制作したダイスゲームです。
 
+5つのサイコロを振り、出た目により役を選択していき高得点を目指すゲームです。(プレイ人数：1人)
+
 サイコロのキープと役の選択はマウスクリック、サイコロを振ったりゲームをリセットする際はキーボード操作が必要なため、PCでのプレイ推奨です。
 
 こちらのリンクからゲームが開始されます　→　[ヤッツィー(Yahtzee)](https://kitao.github.io/pyxel/wasm/launcher/?play=nekomata-risan.dice_game.dice_game&gamepad=enabled)
